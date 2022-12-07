@@ -24,6 +24,34 @@
                                  index))
                        {}
                        (rest (reverse stacks)))
-       :procedure ""})))
+       :procedure (map #(map edn/read-string (re-seq #"\d+" %))
+                       procedure)})))
 
-(pprint (parse-input))
+(defn rearrange
+  [{:keys [stacks procedure move-crates-at-once?]}]
+  (reduce (fn [stacks [n from to]]
+            (let [[crates xs] (split-at n (stacks from))]
+              (-> stacks
+                  (assoc from xs)
+                  (update to #(concat (if move-crates-at-once?
+                                        crates
+                                        (reverse crates))
+                                      %)))))
+          stacks
+          procedure))
+
+(def s (rearrange (parse-input)))
+
+(def answer1
+  (->> (parse-input)
+       rearrange
+       (sort-by key)
+       (map #(first (second %)))
+       (apply str)))
+
+(def answer2
+  (->> (assoc (parse-input) :move-crates-at-once? true)
+       rearrange
+       (sort-by key)
+       (map #(first (second %)))
+       (apply str)))
